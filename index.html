@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style type="text/css">
+      body, html {
+        margin: 0; 
+        padding: 0; 
+        height: 100%; 
+        overflow: hidden;
+        font-family: "Segoe UI", "Roboto", sans-serif;
+        text-align: center;
+        background-color: #274e77;
+        color: white;
+      }
+      
+      p {
+        line-height: 2em;
+      }
+      
+      a {
+        color: #5f94ca;
+      }
+      
+      #header {
+        height: 10%;
+      }
+      
+      #header img {
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: auto;
+        margin-right: auto;
+        width: 80%;
+        height: 100%;
+        max-width: 600px;
+        display: block;
+      }
+      
+      #content {
+        position: absolute; 
+        left: 0; 
+        right: 0; 
+        bottom: 0; 
+        top: 10%;
+      }
+      
+      #google-sheet, #google-form {
+        display: inline-flex;
+        flex-grow: 1;
+      }
+      
+      #google-sheet-container {
+        display: flex;
+        flex-flow: column;
+        width: 90%;
+        height: 30%;
+        margin-left: 5%;
+        margin-right: 5%;
+        margin-bottom: 5%;
+      }
+      
+      #google-form-container {
+        display: flex;
+        flex-flow: column;
+        width: 90%;
+        height: 65%;
+        margin-left: 5%;
+        margin-right: 5%;
+      }
+      
+      @media only screen and (min-width: 800px) {
+        /* For desktop: */
+        #google-sheet-container {
+          width: 42.5%;
+          height: 100%;
+          margin-left: 5%;
+          margin-right: 2.5%;
+          float: left;
+        }
+        #google-form-container {
+          width: 42.5%;
+          height: 100%;
+          margin-left: 2.5%;
+          margin-right: 5%;
+          float: right;
+        }
+      }
+      
+      #error-dialog-background {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: black;
+        background-color: rgba(0,0,0,0.4);
+      }
+      
+      #error-dialog {
+        background-color: white;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid black;
+        width: 500px;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+      }
+      
+      .error-dialog-close {
+        color: gray;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      
+      .error-dialog-close:hover,
+      .error-dialog-close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header"> <a target="_self"><img src="https://www.47aslhs.net/files/theme/images/47weblogo_gray.svg"></a> </div>
+    <div id="content">
+      <div id="google-sheet-container">
+        <p>This embedded sheet may not auto-update; check the <a href="https://go.47aslhs.net/available-bathrooms">live sheet</a> to be sure.</p>
+        <iframe id="google-sheet" src="https://docs.google.com/spreadsheets/d/1JfPIhlxUYCUeve3eWB9Mw7QdKZe9CWwxJmXB3xriBE4/pubhtml/sheet?gid=321173922&amp;range=A2:C5&amp;single=true&amp;widget=true&amp;headers=false" frameborder="0" marginheight="0" marginwidth="0"></iframe>
+      </div>
+      <div id="google-form-container">
+        <p>Wait for the confirmation pop-up box before going to the bathroom.</p>
+        <iframe id="google-form" src="https://docs.google.com/forms/d/e/1FAIpQLSeIWQKjuXluoJKXiQnQpQ48e3pA4aMoJUQr9_BI7r5fYtiIxQ/viewform" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+      </div>
+    </div>
+    <div id="error-dialog-background">
+      <div id="error-dialog">
+        <span class="error-dialog-close"> &times; </span><br>
+      </div>
+    </div>
+    <script>
+      var frame1 = document.getElementById("google-sheet");
+      var frame2 = document.getElementById("google-form");
+      var loads = 0;
+      var errorDialogBackground = document.getElementById("error-dialog-background");
+      var errorDialog = document.getElementById("error-dialog");
+      var errorDialogClose = document.getElementsByClassName("error-dialog-close")[0];
+      var close = errorDialog.innerHTML;
+      
+      frame2.onload = function() {
+        var now = Date.now();
+        loads++;
+        if (loads > 2) {
+          loads = 0;
+          google.script.run.withSuccessHandler(handleErrors).withFailureHandler(handleErrors).validateResponse(now);
+        }
+      }
+      
+      var zoomSheet = function(event)
+      {
+          var frame=$('#google-sheet')[0];
+          var container=$('#google-sheet-container')[0]
+          var _frameWidth=container.offsetWidth;
+          var _frameHeight=container.offsetHeight;
+      
+          var percent=_frameWidth/402;
+      
+          frame.style.width=100.0/percent+"%";
+          frame.style.height=_frameHeight"px";
+      
+          frame.style.msZoom=percent;
+          frame.style.webkitTransform='scale('+percent+')';
+          frame.style.webkitTransformOrigin='top left';
+          frame.style.MozTransform='scale('+percent+')';
+          frame.style.MozTransformOrigin='top left';
+          frame.style.oTransform='scale('+percent+')';
+          frame.style.oTransformOrigin='top left';
+      };
+      
+      window.addEventListener('resize',zoomSheet);
+      frame1.addEventListener('load',zoomSheet);
+      
+      function handleErrors(fullString) {
+        frame1.src = frame1.src + "&amp;foo=" + Date.now();
+        var stringArray = fullString.toString().split(" ");
+        var errorString = stringArray[0];
+        var errorDisplayText;
+        var bathroom = "";
+        for (var i = 1; i < stringArray.length; i++) bathroom += stringArray[i] + " ";
+        if (errorString == "CLEAR_SIGNOUT") {
+          errorDisplayText = "You're signed out to the " + bathroom + " bathroom.";
+        }
+        else if (errorString == "CLEAR_SIGNIN") {
+          var bathroom = fullString.split(" ")[1];
+          errorDisplayText = "You're signed back in from the bathroom.";
+        }
+        else if (errorString == "NO_SIGNOUT") {
+          errorDisplayText = "You aren't currently signed out to any bathrooms. Refresh to return to the start of the form.";
+        }
+        else if (errorString == "EXISTING_SIGNOUT") {
+          errorDisplayText = "You cannot sign out to another bathroom because you're already signed out to one. Refresh to return to the start of the form.";
+        }
+        else if (errorString == "ALREADY_RESERVED") {
+          errorDisplayText = "This bathroom was reserved while you were signing out. Please refresh and to return to the start of the form and select another bathroom.";
+        }
+        else { // Unknown error
+          errorDisplayText = errorString.toString();
+        }
+        errorDialog.innerHTML = close + errorDisplayText;
+        errorDialogBackground.style.display = "block";
+        errorDialogClose = document.getElementsByClassName("error-dialog-close")[0];
+      }
+      
+      errorDialogClose.addEventListener("click", function() {
+        errorDialogBackground.style.display = "none";
+      });
+      
+      window.onclick = function(event) {
+        if (event.target == errorDialogBackground || event.target == errorDialogClose) {
+          errorDialogBackground.style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>
+
+
